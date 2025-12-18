@@ -4,7 +4,7 @@ using System.Collections;
 using MoveControl2D;
 
 
-public class DemoScene : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
 	// movement config
 	public float gravity = -25f;
