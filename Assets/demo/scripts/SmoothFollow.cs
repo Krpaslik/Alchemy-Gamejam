@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections;
-using Prime31;
+using MoveControl2D;
 
 
 public class SmoothFollow : MonoBehaviour

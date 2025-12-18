@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 
 
-namespace Prime31 {
+namespace MoveControl2D {
 
 [RequireComponent( typeof( BoxCollider2D ), typeof( Rigidbody2D ) )]
 public class CharacterController2D : MonoBehaviour

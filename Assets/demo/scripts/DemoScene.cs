@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Collections;
-using Prime31;
+using MoveControl2D;
 
 
 public class DemoScene : MonoBehaviour
@@ -20,6 +21,22 @@ public class DemoScene : MonoBehaviour
 	private RaycastHit2D _lastControllerColliderHit;
 	private Vector3 _velocity;
 
+    private float _move = 0f;
+    private bool _jumpPressed = false;
+    private bool _downPressed = false;
+
+    public void OnMove(InputAction.CallbackContext ctx) {
+        _move = ctx.ReadValue<float>();
+    }
+    public void OnJump(InputAction.CallbackContext ctx) {
+        if (ctx.started) _jumpPressed = true;
+    }
+    public void OnDrop(InputAction.CallbackContext ctx) {
+        _downPressed = ctx.ReadValueAsButton();
+    }
+    void LateUpdate() {
+        _jumpPressed = false;
+    }
 
 	void Awake()
 	{
@@ -66,7 +83,7 @@ public class DemoScene : MonoBehaviour
 		if( _controller.isGrounded )
 			_velocity.y = 0;
 
-		if( Input.GetKey( KeyCode.RightArrow ) )
+		if( _move > 0 )
 		{
 			normalizedHorizontalSpeed = 1;
 			if( transform.localScale.x < 0f )
@@ -75,7 +92,7 @@ public class DemoScene : MonoBehaviour
 			if( _controller.isGrounded )
 				_animator.Play( Animator.StringToHash( "Run" ) );
 		}
-		else if( Input.GetKey( KeyCode.LeftArrow ) )
+		else if( _move < 0 )
 		{
 			normalizedHorizontalSpeed = -1;
 			if( transform.localScale.x > 0f )
@@ -94,7 +111,7 @@ public class DemoScene : MonoBehaviour
 
 
 		// we can only jump whilst grounded
-		if( _controller.isGrounded && Input.GetKeyDown( KeyCode.UpArrow ) )
+		if( _controller.isGrounded && _jumpPressed )
 		{
 			_velocity.y = Mathf.Sqrt( 2f * jumpHeight * -gravity );
 			_animator.Play( Animator.StringToHash( "Jump" ) );
@@ -110,7 +127,7 @@ public class DemoScene : MonoBehaviour
 
 		// if holding down bump up our movement amount and turn off one way platform detection for a frame.
 		// this lets us jump down through one way platforms
-		if( _controller.isGrounded && Input.GetKey( KeyCode.DownArrow ) )
+		if( _controller.isGrounded && _downPressed )
 		{
 			_velocity.y *= 3f;
 			_controller.ignoreOneWayPlatformsThisFrame = true;
