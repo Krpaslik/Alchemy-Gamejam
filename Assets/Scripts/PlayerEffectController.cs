@@ -22,9 +22,11 @@ public class PlayerEffectController : MonoBehaviour
     // UI hooky
     public System.Action<StatusEffectDefinition, ItemTypeData, float> OnEffectUpdated;
     public System.Action<string> OnEffectRemoved;
+    public PlayerMovement Movement { get; private set; }
 
     void Awake()
     {
+        Movement = GetComponent<PlayerMovement>();
         // pokud máš grafiku v child objektu, dej sem referenci místo transform
         _visualRoot = transform;
         _baseScale = _visualRoot.localScale;

@@ -6,6 +6,26 @@ using MoveControl2D;
 
 public class PlayerMovement : MonoBehaviour
 {
+	// ===== runtime effect modifiers =====
+	float _jumpHeightMul = 1f;      // násobí jumpHeight
+	float _gravityMul = 1f;         // násobí sílu gravitace
+	bool  _reverseGravity = false;   // obrácení směru
+	float _glideMul = 1f;           // 0..1 (1 = normál, menší = vznášení)
+
+	// veřejné settery pro efekty
+	public void SetJumpHeightMultiplier(float mul) => _jumpHeightMul = Mathf.Max(0.01f, mul);
+	public void ResetJumpHeightMultiplier() => _jumpHeightMul = 1f;
+
+	public void SetReverseGravity(bool inv) => _reverseGravity = inv;
+	public void ResetReverseGravity() => _reverseGravity = false;
+
+	public void SetGravityMultiplier(float mul) => _gravityMul = Mathf.Max(0f, mul);
+	public void ResetGravityMultiplier() => _gravityMul = 1f;
+
+	public void SetGlideMultiplier(float mul) => _glideMul = Mathf.Clamp01(mul);
+	public void ResetGlideMultiplier() => _glideMul = 1f;
+
+
 	// movement config
 	public float gravity = -25f;
 	public float runSpeed = 8f;
@@ -107,20 +127,32 @@ public class PlayerMovement : MonoBehaviour
 		}
 
 
-		// we can only jump whilst grounded
-		if( _controller.isGrounded && _jumpPressed )
+		// effective gravity: tvůj gravity je záporný pro "dolů" :contentReference[oaicite:1]{index=1}
+		float baseG = Mathf.Abs(gravity);
+		float effectiveG = baseG * _gravityMul * (_reverseGravity ? +1f : -1f);
+
+		// skok jen když jsi grounded
+		if (_controller.isGrounded && _jumpPressed)
 		{
-			_velocity.y = Mathf.Sqrt( 2f * jumpHeight * -gravity );
-			_animator.Play( Animator.StringToHash( "Jump" ) );
+			float effectiveJumpHeight = jumpHeight * _jumpHeightMul;
+			float jumpSpeed = Mathf.Sqrt(2f * effectiveJumpHeight * Mathf.Abs(effectiveG));
+
+			// skok je vždy proti gravitaci
+			_velocity.y = -Mathf.Sign(effectiveG) * jumpSpeed;
+
+			_animator.Play(Animator.StringToHash("Jump"));
 		}
 
+		// gravitační akcelerace (glide při pohybu ve směru gravitace)
+		bool movingWithGravity = Mathf.Sign(_velocity.y) == Mathf.Sign(effectiveG);
+		float gThisFrame = effectiveG * (movingWithGravity ? _glideMul : 1f);
 
 		// apply horizontal speed smoothing it. dont really do this with Lerp. Use SmoothDamp or something that provides more control
 		var smoothedMovementFactor = _controller.isGrounded ? groundDamping : inAirDamping; // how fast do we change direction?
 		_velocity.x = Mathf.Lerp( _velocity.x, normalizedHorizontalSpeed * runSpeed, Time.deltaTime * smoothedMovementFactor );
 
 		// apply gravity before moving
-		_velocity.y += gravity * Time.deltaTime;
+		_velocity.y += gThisFrame * Time.deltaTime;
 
 		// if holding down bump up our movement amount and turn off one way platform detection for a frame.
 		// this lets us jump down through one way platforms
