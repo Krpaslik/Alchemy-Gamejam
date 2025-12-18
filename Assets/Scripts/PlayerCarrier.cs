@@ -16,6 +16,7 @@ public class PlayerCarrier : MonoBehaviour
     CarryableItem _carried;
 
     public bool HasItem => _carried != null;
+    public CarryableItem CarriedItem => _carried;
 
     // Input System: Interact (Button)
     public void OnItemTake(InputAction.CallbackContext ctx)
@@ -47,6 +48,12 @@ public class PlayerCarrier : MonoBehaviour
         _carried.Drop();
         _carried = null;
     }
+
+    public void Clear()
+    {
+        _carried = null;
+    }
+
 
     void OnDrawGizmosSelected()
     {

@@ -76,27 +76,37 @@ public class CauldronStation : MonoBehaviour, IInteractable
             if (r == null || r.resultType == null || r.ingredients == null || r.ingredients.Count == 0)
                 continue;
 
-            if (ContainsMultiset(available, r.ingredients))
+            if (ExactMultiset(available, r.ingredients))
                 return r;
         }
         return null;
     }
 
-    static bool ContainsMultiset(List<ItemTypeData> available, List<ItemTypeData> needed)
+    static bool ExactMultiset(List<ItemTypeData> a, List<ItemTypeData> b)
     {
+        if (a == null || b == null) return false;
+        if (a.Count != b.Count) return false; // <-- klíčové: žádné ingredience navíc
+
         var counts = new Dictionary<ItemTypeData, int>();
-        foreach (var a in available)
+
+        foreach (var x in a)
         {
-            if (!counts.ContainsKey(a)) counts[a] = 0;
-            counts[a]++;
+            if (x == null) return false;
+            if (!counts.ContainsKey(x)) counts[x] = 0;
+            counts[x]++;
         }
 
-        foreach (var n in needed)
+        foreach (var x in b)
         {
-            if (n == null) return false;
-            if (!counts.TryGetValue(n, out var c) || c <= 0) return false;
-            counts[n] = c - 1;
+            if (x == null) return false;
+            if (!counts.TryGetValue(x, out var c) || c <= 0) return false;
+            counts[x] = c - 1;
         }
+
+        // ověř, že nic nezbylo
+        foreach (var kv in counts)
+            if (kv.Value != 0) return false;
+
         return true;
     }
 

@@ -1,9 +1,13 @@
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(Collider2D))]
 public class CarryableItem : MonoBehaviour
 {
     public ItemTypeData typeData;
+
+    public event Action<CarryableItem> PickedUp;
+    public event Action<CarryableItem> Dropped;
 
     Rigidbody2D _rb;
     Collider2D _col;
@@ -49,14 +53,16 @@ public class CarryableItem : MonoBehaviour
         {
             _rb.linearVelocity = Vector2.zero;
             _rb.angularVelocity = 0f;
-            _rb.simulated = false; // vypne fyziku
+            _rb.simulated = false;
         }
 
-        if (_col) _col.enabled = false; // ať se to neplete do kolizí při nesení
+        if (_col) _col.enabled = false;
 
         transform.SetParent(carryPoint);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
+
+        PickedUp?.Invoke(this);
     }
 
     public void Drop()
@@ -64,31 +70,17 @@ public class CarryableItem : MonoBehaviour
         IsCarried = false;
 
         transform.SetParent(null);
-        //transform.position = worldPosition;
 
         if (_col) _col.enabled = true;
 
         if (_rb)
         {
             _rb.simulated = true;
+            _rb.bodyType = RigidbodyType2D.Dynamic;
+            _rb.gravityScale = 1f;
             _rb.linearVelocity = Vector2.zero;
         }
-    }
 
-    // Později: “použití” předmětu (když ho někde položíš / aktivuješ)
-    public void ApplyEffect(GameObject user)
-    {
-        if (typeData == null) return;
-
-        switch (typeData.effect)
-        {
-            case ItemEffect.Heal:
-                Debug.Log($"{user.name} heal +{typeData.amount} (demo)");
-                break;
-
-            case ItemEffect.SpeedBoost:
-                Debug.Log($"{user.name} speed boost +{typeData.amount} na {typeData.duration}s (demo)");
-                break;
-        }
+        Dropped?.Invoke(this);
     }
 }

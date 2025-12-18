@@ -23,24 +23,47 @@ public class PlayerInteractor : MonoBehaviour
 
     void UseItem()
     {
-        // 1) PRIORITA: když nic neneseš, zkus sebrat nejbližší item
+        // PRIORITA: když nic neneseš, zkus sebrat nejbližší item
         if (!_carrier.HasItem)
         {
             if (_carrier.TryPickUp()) return;
         }
 
-        // 2) Když máš před sebou UseItem target (stolek/kniha), použij ho
-        // (doporučení: craft jen když nemáš item v ruce, viz CauldronStation níže)
+        // PRIORITA 2: když něco neseš a má to efekt, použij to (potion)
+        if (_carrier.HasItem)
+        {
+            var carried = _carrier.CarriedItem;
+            var data = carried != null ? carried.typeData : null;
+
+            if (data != null && data.useEffects != null && data.useEffects.Count > 0)
+            {
+                var effects = GetComponent<PlayerEffectController>();
+                if (effects != null)
+                {
+                    foreach (var eff in data.useEffects)
+                        effects.AddEffectFromItem(eff, data);
+
+                    // spotřebuj item
+                    Destroy(carried.gameObject);
+                    _carrier.Clear(); // musí existovat - pokud nemáš, napiš a upravím na tvou verzi
+
+                    return; // důležité: už nic dalšího (drop, target) se neprovádí
+                }
+            }
+        }
+
+        // Jinak když něco neseš, pusť to
+        if (_carrier.HasItem)
+        {
+            _carrier.DropItem();
+            return;
+        }
+
+        // Když máš před sebou UseItem target (stolek/kniha), použij ho
         if (_current != null)
         {
             _current.UseItem(this);
             return;
-        }
-
-        // 3) Jinak když něco neseš, pusť to (bez teleportu)
-        if (_carrier.HasItem)
-        {
-            _carrier.DropItem();
         }
     }
 
