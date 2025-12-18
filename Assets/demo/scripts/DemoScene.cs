@@ -32,7 +32,8 @@ public class DemoScene : MonoBehaviour
         if (ctx.started) _jumpPressed = true;
     }
     public void OnDrop(InputAction.CallbackContext ctx) {
-        _downPressed = ctx.ReadValueAsButton();
+        if (ctx.performed) _downPressed = true;
+		if (ctx.canceled) _downPressed = false;
     }
     void LateUpdate() {
         _jumpPressed = false;
@@ -83,21 +84,17 @@ public class DemoScene : MonoBehaviour
 		if( _controller.isGrounded )
 			_velocity.y = 0;
 
-		if( _move > 0 )
+		if( _move != 0 )
 		{
-			normalizedHorizontalSpeed = 1;
-			if( transform.localScale.x < 0f )
-				transform.localScale = new Vector3( -transform.localScale.x, transform.localScale.y, transform.localScale.z );
-
-			if( _controller.isGrounded )
-				_animator.Play( Animator.StringToHash( "Run" ) );
-		}
-		else if( _move < 0 )
-		{
-			normalizedHorizontalSpeed = -1;
-			if( transform.localScale.x > 0f )
-				transform.localScale = new Vector3( -transform.localScale.x, transform.localScale.y, transform.localScale.z );
-
+			normalizedHorizontalSpeed = _move;
+			if (_move > 0) {
+				if( transform.localScale.x < 0f )
+					transform.localScale = new Vector3( -transform.localScale.x, transform.localScale.y, transform.localScale.z );
+			} 
+			else if (_move < 0) {
+				if( transform.localScale.x > 0f )
+					transform.localScale = new Vector3( -transform.localScale.x, transform.localScale.y, transform.localScale.z );
+			}
 			if( _controller.isGrounded )
 				_animator.Play( Animator.StringToHash( "Run" ) );
 		}
@@ -129,8 +126,9 @@ public class DemoScene : MonoBehaviour
 		// this lets us jump down through one way platforms
 		if( _controller.isGrounded && _downPressed )
 		{
-			_velocity.y *= 3f;
+			// _velocity.y *= 3f;
 			_controller.ignoreOneWayPlatformsThisFrame = true;
+			if (_velocity.y > -1f) _velocity.y = -6f;
 		}
 
 		_controller.move( _velocity * Time.deltaTime );
