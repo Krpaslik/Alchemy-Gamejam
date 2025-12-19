@@ -79,10 +79,11 @@ public class PlayerEffectController : MonoBehaviour
             timeLeft = duration
         };
 
-        _active.Add(def.effectId, e);
+        _active.Add(def.effectId, e);      
 
         def.Apply(this);
         OnEffectUpdated?.Invoke(def, sourceItem, e.timeLeft);
+        EffectManager.Instance.AddOrRefresh(def.effectId, sourceItem.icon, duration);
 
         if (duration <= 0f)
             RemoveEffect(def.effectId);

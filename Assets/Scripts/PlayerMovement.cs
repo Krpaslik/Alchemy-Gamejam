@@ -36,6 +36,9 @@ public class PlayerMovement : MonoBehaviour
 	[HideInInspector]
 	private float normalizedHorizontalSpeed = 0;
 
+	[SerializeField] Transform respawnPoint;
+    Rigidbody2D _rb;
+
 	private CharacterController2D _controller;
 	private Animator _animator;
 	private RaycastHit2D _lastControllerColliderHit;
@@ -59,10 +62,42 @@ public class PlayerMovement : MonoBehaviour
         _jumpPressed = false;
     }
 
+	public void Respawn()
+	{
+		if (respawnPoint == null)
+		{
+			Debug.LogError("RespawnPoint není nastavený na PlayerMovement!");
+			return;
+		}
+
+		// Zastav interní rychlosti
+		_velocity = Vector3.zero;
+		normalizedHorizontalSpeed = 0f;
+
+		// Na 1 frame vypnout controller, ať ti to hned nepřepíše pozici
+		if (_controller != null) _controller.enabled = false;
+
+		transform.position = respawnPoint.position;
+
+		if (_controller != null)
+		{
+			_controller.enabled = true;
+			_controller.move(Vector3.zero); // sync stavu
+		}
+
+		// Rigidbody tu reálně nepotřebuješ, ale když existuje, tak ho aspoň vynuluj
+		if (_rb != null)
+		{
+			_rb.linearVelocity = Vector2.zero;
+			_rb.angularVelocity = 0f;
+		}
+	}
+
 	void Awake()
 	{
 		_animator = GetComponent<Animator>();
 		_controller = GetComponent<CharacterController2D>();
+		_rb = GetComponent<Rigidbody2D>();
 
 		// listen to some events for illustration purposes
 		_controller.onControllerCollidedEvent += onControllerCollider;

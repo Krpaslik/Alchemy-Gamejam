@@ -5,11 +5,14 @@ using System.Collections.Generic;
 public class ItemTypeData : ScriptableObject
 {
     public string displayName = "NewItem";
-    public Color color = Color.white;
 
-    // parametry efektu
+    [Header("Visuals")]
+    public Color color = Color.white;
+    public Sprite icon;
+
+    [Header("Effect timing")]
     public float duration = 0f;
-    
+
     [Header("Effect on Use")]
     public List<StatusEffectDefinition> useEffects = new();
 }
