@@ -33,6 +33,14 @@ public class PlayerInteractor : MonoBehaviour
         if (_carrier.HasItem)
         {
             var carried = _carrier.CarriedItem;
+
+            var recipeItem = carried.GetComponent<CarryableRecipeItem>();
+            if (recipeItem != null)
+            {
+                recipeItem.Toggle(this);
+                return;
+            }
+
             var data = carried != null ? carried.typeData : null;
 
             if (data != null && data.useEffects != null && data.useEffects.Count > 0)

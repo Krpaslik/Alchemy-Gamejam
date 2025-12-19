@@ -9,6 +9,8 @@ public class CauldronRecipe : ScriptableObject
 
     [Header("Result")]
     public ItemTypeData resultType;
+    public string title;
+    public string description;
 
     // Kolik výsledných itemů (zatím necháme 1)
     public int resultCount = 1;

@@ -119,15 +119,15 @@ public class PlayerMovement : MonoBehaviour
 				if( transform.localScale.x > 0f )
 					transform.localScale = new Vector3( -transform.localScale.x, transform.localScale.y, transform.localScale.z );
 			}
-			if( _controller.isGrounded )
-				_animator.Play( Animator.StringToHash( "Run" ) );
+			// if( _controller.isGrounded )
+			// 	_animator.Play( Animator.StringToHash( "Run" ) );
 		}
 		else
 		{
 			normalizedHorizontalSpeed = 0;
 
-			if( _controller.isGrounded )
-				_animator.Play( Animator.StringToHash( "Idle" ) );
+			// if( _controller.isGrounded )
+			// 	_animator.Play( Animator.StringToHash( "Idle" ) );
 		}
 
 
@@ -144,7 +144,7 @@ public class PlayerMovement : MonoBehaviour
 			// skok je vždy proti gravitaci
 			_velocity.y = -Mathf.Sign(effectiveG) * jumpSpeed;
 
-			_animator.Play(Animator.StringToHash("Jump"));
+			// _animator.Play(Animator.StringToHash("Jump"));
 		}
 
 		// gravitační akcelerace (glide při pohybu ve směru gravitace)
