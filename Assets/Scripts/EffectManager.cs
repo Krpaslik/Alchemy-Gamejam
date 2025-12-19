@@ -74,4 +74,12 @@ public class EffectManager : MonoBehaviour
             OnEffectsChanged?.Invoke();
         }
     }
+
+    public void ClearAll()
+    {
+        if (_effects.Count == 0) return;
+        _effects.Clear();
+        OnEffectsChanged?.Invoke();
+    }
+
 }

@@ -62,37 +62,6 @@ public class PlayerMovement : MonoBehaviour
         _jumpPressed = false;
     }
 
-	public void Respawn()
-	{
-		if (respawnPoint == null)
-		{
-			Debug.LogError("RespawnPoint není nastavený na PlayerMovement!");
-			return;
-		}
-
-		// Zastav interní rychlosti
-		_velocity = Vector3.zero;
-		normalizedHorizontalSpeed = 0f;
-
-		// Na 1 frame vypnout controller, ať ti to hned nepřepíše pozici
-		if (_controller != null) _controller.enabled = false;
-
-		transform.position = respawnPoint.position;
-
-		if (_controller != null)
-		{
-			_controller.enabled = true;
-			_controller.move(Vector3.zero); // sync stavu
-		}
-
-		// Rigidbody tu reálně nepotřebuješ, ale když existuje, tak ho aspoň vynuluj
-		if (_rb != null)
-		{
-			_rb.linearVelocity = Vector2.zero;
-			_rb.angularVelocity = 0f;
-		}
-	}
-
 	void Awake()
 	{
 		_animator = GetComponent<Animator>();
@@ -204,4 +173,47 @@ public class PlayerMovement : MonoBehaviour
 		_velocity = _controller.velocity;
 	}
 
+	public void Respawn()
+	{
+		if (respawnPoint == null)
+		{
+			Debug.LogError("RespawnPoint není nastavený na PlayerMovement!");
+			return;
+		}
+
+		// 1) Znič to, co hráč nese
+		var carrier = GetComponent<PlayerCarrier>();
+		if (carrier != null) carrier.DropAndDestroy();
+
+		// 2) Reset runtime modifikátorů (ty máš už hotové settery)
+		ResetJumpHeightMultiplier();
+		ResetGravityMultiplier();
+		ResetReverseGravity();
+		ResetGlideMultiplier();
+		var effectCtrl = GetComponent<PlayerEffectController>();
+		if (effectCtrl != null)
+			effectCtrl.ClearAllEffects();
+
+		// 3) Vymaž efekty + GUI
+		if (EffectManager.Instance != null)
+			EffectManager.Instance.ClearAll();
+
+		// 4) Teleport přes controller-safe postup (aby ti to controller nepřepsal)
+		_velocity = Vector3.zero;
+		normalizedHorizontalSpeed = 0f;
+
+		if (_controller != null) _controller.enabled = false;
+		transform.position = respawnPoint.position;
+		if (_controller != null)
+		{
+			_controller.enabled = true;
+			_controller.move(Vector3.zero);
+		}
+
+		if (_rb != null)
+		{
+			_rb.linearVelocity = Vector2.zero;
+			_rb.angularVelocity = 0f;
+		}
+	}
 }

@@ -127,4 +127,18 @@ public class PlayerEffectController : MonoBehaviour
             _baseScale.z
         );
     }
+
+    public void ClearAllEffects()
+    {
+        // odeber všechny efekty korektně (aby se zavolal Remove)
+        var ids = new List<string>(_active.Keys);
+        foreach (var id in ids)
+            RemoveEffect(id);
+
+        _active.Clear();
+        _scaleMultipliers.Clear();
+
+        // vrať scale do původního stavu
+        _visualRoot.localScale = _baseScale;
+    }
 }

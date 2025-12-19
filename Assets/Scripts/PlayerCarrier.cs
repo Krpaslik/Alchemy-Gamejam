@@ -49,6 +49,16 @@ public class PlayerCarrier : MonoBehaviour
         _carried = null;
     }
 
+    public void DropAndDestroy()
+    {
+        if (_carried == null) return;
+
+        var tmp = _carried.gameObject;
+        _carried = null;
+
+        Destroy(tmp);
+    }
+
     public void Clear()
     {
         _carried = null;
