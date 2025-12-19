@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using MoveControl2D;
 
 public class PlayerEffectController : MonoBehaviour
 {
@@ -10,16 +11,15 @@ public class PlayerEffectController : MonoBehaviour
         public float timeLeft;
     }
 
-    // effectId → aktivní efekt
     private readonly Dictionary<string, ActiveEffect> _active = new();
-
-    // effectId → scale multiplier
     private readonly Dictionary<string, float> _scaleMultipliers = new();
 
     private Transform _visualRoot;
     private Vector3 _baseScale;
 
-    // UI hooky
+    // DŮLEŽITÉ: controller, aby se dal refreshnout po změně scale
+    private CharacterController2D _cc2d;
+
     public System.Action<StatusEffectDefinition, ItemTypeData, float> OnEffectUpdated;
     public System.Action<string> OnEffectRemoved;
     public PlayerMovement Movement { get; private set; }
@@ -27,7 +27,9 @@ public class PlayerEffectController : MonoBehaviour
     void Awake()
     {
         Movement = GetComponent<PlayerMovement>();
-        // pokud máš grafiku v child objektu, dej sem referenci místo transform
+        _cc2d = GetComponent<CharacterController2D>();
+
+        // zatím škáluješ celý objekt
         _visualRoot = transform;
         _baseScale = _visualRoot.localScale;
     }
@@ -54,9 +56,6 @@ public class PlayerEffectController : MonoBehaviour
             RemoveEffect(toRemove[i]);
     }
 
-    /// <summary>
-    /// Přidá efekt. Pokud už existuje stejný effectId, jen resetne duration.
-    /// </summary>
     public void AddEffectFromItem(StatusEffectDefinition def, ItemTypeData sourceItem)
     {
         if (def == null || sourceItem == null)
@@ -64,7 +63,6 @@ public class PlayerEffectController : MonoBehaviour
 
         float duration = Mathf.Max(0f, sourceItem.duration);
 
-        // už existuje → reset času
         if (_active.TryGetValue(def.effectId, out var existing))
         {
             existing.timeLeft = duration;
@@ -79,7 +77,7 @@ public class PlayerEffectController : MonoBehaviour
             timeLeft = duration
         };
 
-        _active.Add(def.effectId, e);      
+        _active.Add(def.effectId, e);
 
         def.Apply(this);
         OnEffectUpdated?.Invoke(def, sourceItem, e.timeLeft);
@@ -99,8 +97,6 @@ public class PlayerEffectController : MonoBehaviour
         OnEffectRemoved?.Invoke(effectId);
     }
 
-    // ===== API pro efekty (příklad: scale) =====
-
     public void SetScaleMultiplier(string effectId, float mul)
     {
         _scaleMultipliers[effectId] = mul;
@@ -119,18 +115,46 @@ public class PlayerEffectController : MonoBehaviour
         foreach (var v in _scaleMultipliers.Values)
             mul *= v;
 
-        // zachovej flip z PlayerMovement (ten mění znaménko X)
         float signX = Mathf.Sign(_visualRoot.localScale.x);
+        if (signX == 0) signX = 1;
+
+        // 1) world Y spodku collideru PŘED změnou
+        float bottomBefore = 0f;
+        bool hasCC = _cc2d != null && _cc2d.boxCollider != null;
+        if (hasCC)
+            bottomBefore = _cc2d.boxCollider.bounds.min.y;
+
+        // 2) změna scale
         _visualRoot.localScale = new Vector3(
             _baseScale.x * mul * signX,
             _baseScale.y * mul,
             _baseScale.z
         );
+
+        // 3) promítni scale do fyziky
+        Physics2D.SyncTransforms();
+
+        // 4) world Y spodku collideru PO změně
+        if (hasCC)
+        {
+            float bottomAfter = _cc2d.boxCollider.bounds.min.y;
+
+            // 5) posun tak, aby nohy zůstaly na zemi (spodek collideru na stejné Y)
+            float deltaY = bottomBefore - bottomAfter;
+            if (Mathf.Abs(deltaY) > 0.00001f)
+            {
+                _cc2d.transform.position += new Vector3(0f, deltaY, 0f);
+                Physics2D.SyncTransforms();
+            }
+
+            // 6) refresh ray spacing + okamžitě vyřeš případné překryvy
+            _cc2d.recalculateDistanceBetweenRays();
+            _cc2d.move(Vector3.zero);
+        }
     }
 
     public void ClearAllEffects()
     {
-        // odeber všechny efekty korektně (aby se zavolal Remove)
         var ids = new List<string>(_active.Keys);
         foreach (var id in ids)
             RemoveEffect(id);
@@ -138,7 +162,11 @@ public class PlayerEffectController : MonoBehaviour
         _active.Clear();
         _scaleMultipliers.Clear();
 
-        // vrať scale do původního stavu
         _visualRoot.localScale = _baseScale;
+
+        if (_cc2d != null)
+            _cc2d.recalculateDistanceBetweenRays();
+
+        Physics2D.SyncTransforms();
     }
 }
