@@ -20,28 +20,24 @@ public class CarryableItem : MonoBehaviour
         _rb = GetComponent<Rigidbody2D>();
         _col = GetComponent<Collider2D>();
         _sr = GetComponentInChildren<SpriteRenderer>();
-        ApplyTypeVisual();
+        RefreshVisual();
     }
 
     void OnValidate()
     {
-        // aby se barva měnila i v editoru
         _sr = GetComponentInChildren<SpriteRenderer>();
-        ApplyTypeVisual();
+        RefreshVisual();
     }
 
-    void ApplyTypeVisual()
-    {
-        if (_sr != null && typeData != null)
-            _sr.color = typeData.color;
-    }
 
     public void RefreshVisual()
     {
-        // stejné jako tvoje ApplyTypeVisual, jen veřejné
-        var sr = GetComponentInChildren<SpriteRenderer>();
-        if (sr != null && typeData != null)
-            sr.color = typeData.color;
+        if (_sr == null || typeData == null) return;
+
+        _sr.color = typeData.color;
+
+        if (typeData.icon != null)
+            _sr.sprite = typeData.icon;
     }
 
 
@@ -56,14 +52,24 @@ public class CarryableItem : MonoBehaviour
             _rb.simulated = false;
         }
 
-        if (_col) _col.enabled = false;
+        transform.SetParent(carryPoint, true);
+        transform.rotation = Quaternion.identity;
 
-        transform.SetParent(carryPoint);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
+        // nejdřív přibližně na carryPoint
+        transform.position = carryPoint.position;
+
+        if (_col != null)
+        {
+            // posun nahoru tak, aby spodek collideru byl na carryPoint
+            float deltaY = carryPoint.position.y - _col.bounds.min.y;
+            transform.position += new Vector3(0f, deltaY, 0f);
+        }
+
+        if (_col) _col.enabled = false;
 
         PickedUp?.Invoke(this);
     }
+
 
     public void Drop()
     {

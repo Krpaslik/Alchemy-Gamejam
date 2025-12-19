@@ -71,6 +71,7 @@ objectSelectors = {
 recentSearches = [
 ]
 searchItemFavorites = [
+	"56914f29ac1ced349acd0a7185ef9c1d"
 ]
 savedSearchesSortOrder = 0
 showSavedSearchPanel = false
