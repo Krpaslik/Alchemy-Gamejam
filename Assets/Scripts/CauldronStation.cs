@@ -47,7 +47,9 @@ public class CauldronStation : MonoBehaviour, IInteractable
 
         if (recipe == null)
         {
-            Debug.Log("Žádný recept neodpovídá surovinám v kotli.");
+            Debug.Log("Žádný recept neodpovídá surovinám v kotli. Suroviny znehodnoceny");
+            foreach (var it in items)
+            Destroy(it.gameObject);
             return;
         }
 
